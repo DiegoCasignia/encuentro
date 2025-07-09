@@ -3,102 +3,202 @@ const { gql } = require('graphql-tag');
 const typeDefs = gql`
   # User
   type User {
-    idUsuario: ID!
-    nombre: String!
-    apellido: String!
+    userId: ID!
+    firstName: String!
+    lastName: String!
     email: String!
-    rol: String!
+    role: String!
+  }
+
+  input CreateUserInput {
+    firstName: String!
+    lastName: String!
+    email: String!
+    role: String!
+    password: String!
+  }
+
+  input UpdateUserInput {
+    firstName: String
+    lastName: String
+    email: String
+    role: String
+    password: String
   }
 
   # Event
   type Event {
-    idEvento: ID!
-    titulo: String!
-    descripcion: String
-    fecha: String!
-    hora: String!
-    ubicacion: String!
-    categoria: String!
-    capacidadTotal: Int!
-    estado: String
-    visibilidad: String
-    idOrganizador: ID!
+    eventId: ID!
+    title: String!
+    description: String
+    date: String!
+    time: String!
+    location: String!
+    category: String!
+    totalCapacity: Int!
+    status: String
+    visibility: String
+    organizerId: ID!
+  }
+
+  input CreateEventInput {
+    title: String!
+    description: String
+    date: String!
+    time: String!
+    location: String!
+    category: String!
+    totalCapacity: Int!
+    status: String
+    visibility: String
+    organizerId: ID!
+  }
+
+  input UpdateEventInput {
+    title: String
+    description: String
+    date: String
+    time: String
+    location: String
+    category: String
+    totalCapacity: Int
+    status: String
+    visibility: String
+    organizerId: ID
   }
 
   # Zone
   type Zone {
-    idZona: ID!
-    nombreZona: String!
-    precio: Float!
-    capacidadZona: Int!
-    idEvento: ID!
+    zoneId: ID!
+    zoneName: String!
+    price: Float!
+    zoneCapacity: Int!
+    eventId: ID!
+  }
+
+  input CreateZoneInput {
+    zoneName: String!
+    price: Float!
+    zoneCapacity: Int!
+    eventId: ID!
+  }
+
+  input UpdateZoneInput {
+    zoneName: String
+    price: Float
+    zoneCapacity: Int
+    eventId: ID
   }
 
   # Ticket
   type Ticket {
-    idEntrada: ID!
-    codigoQR: String!
-    estado: String!
-    idZona: ID!
-    idCliente: ID!
-    fechaCompra: String!
-    medioPago: String!
+    ticketId: ID!
+    qrCode: String!
+    status: String!
+    zoneId: ID!
+    clientId: ID!
+    purchaseDate: String!
+    paymentMethod: String!
+  }
+
+  input CreateTicketInput {
+    qrCode: String!
+    status: String!
+    zoneId: ID!
+    clientId: ID!
+    purchaseDate: String!
+    paymentMethod: String!
+  }
+
+  input UpdateTicketInput {
+    qrCode: String
+    status: String
+    zoneId: ID
+    clientId: ID
+    purchaseDate: String
+    paymentMethod: String
   }
 
   # Reservation
   type Reservation {
-    idReserva: ID!
-    idEntrada: ID!
-    fechaReserva: String!
-    fechaExpiracion: String!
-    estado: String!
+    reservationId: ID!
+    ticketId: ID!
+    reservationDate: String!
+    expirationDate: String!
+    status: String!
+  }
+
+  input CreateReservationInput {
+    ticketId: ID!
+    reservationDate: String!
+    expirationDate: String!
+    status: String!
+  }
+
+  input UpdateReservationInput {
+    ticketId: ID
+    reservationDate: String
+    expirationDate: String
+    status: String
   }
 
   # Notification
   type Notification {
-    idNotificacion: ID!
-    idUsuario: ID!
-    tipo: String!
-    mensaje: String!
-    fechaEnvio: String!
-    leido: Boolean!
+    id: ID!
+    userId: ID!
+    type: String!
+    message: String!
+    sentDate: String!
+    read: Boolean!
   }
 
   # Queries
   type Query {
-    # Users
     getAllUsers: [User]
-    getUserById(idUsuario: ID!): User
+    getUserById(id: ID!): User
 
-    # Events
     getAllEvents: [Event]
-    getEventById(idEvento: ID!): Event
+    getEventById(id: ID!): Event
 
-    # Zones
     getAllZones: [Zone]
-    getZoneById(idZona: ID!): Zone
+    getZoneById(id: ID!): Zone
 
-    # Tickets
     getAllTickets: [Ticket]
-    getTicketById(idEntrada: ID!): Ticket
+    getTicketById(id: ID!): Ticket
 
-    # Reservations
     getAllReservations: [Reservation]
-    getReservationById(idReserva: ID!): Reservation
+    getReservationById(id: ID!): Reservation
 
-    # Notifications
     getAllNotifications: [Notification]
-    getNotificationById(idNotificacion: ID!): Notification
+    getNotificationById(id: ID!): Notification
   }
 
-  # Mutations (opcionales, puedes agregar según necesites)
+  # Mutations
   type Mutation {
-    # User mutations example
-    createUser(nombre: String!, apellido: String!, email: String!, rol: String!): User
-    updateUser(idUsuario: ID!, nombre: String, apellido: String, email: String, rol: String): User
-    deleteUser(idUsuario: ID!): Boolean
+    # Users
+    createUser(input: CreateUserInput!): User
+    updateUser(userId: ID!, input: UpdateUserInput!): User
+    deleteUser(userId: ID!): Boolean
 
-    # Similar mutations pueden definirse para Events, Zones, Tickets, Reservations, Notifications
+    # Events
+    createEvent(input: CreateEventInput!): Event
+    updateEvent(eventId: ID!, input: UpdateEventInput!): Event
+    deleteEvent(eventId: ID!): Boolean
+
+    # Zones
+    createZone(input: CreateZoneInput!): Zone
+    updateZone(zoneId: ID!, input: UpdateZoneInput!): Zone
+    deleteZone(zoneId: ID!): Boolean
+
+    # Tickets
+    createTicket(input: CreateTicketInput!): Ticket
+    updateTicket(ticketId: ID!, input: UpdateTicketInput!): Ticket
+    deleteTicket(ticketId: ID!): Boolean
+
+    # Reservations
+    createReservation(input: CreateReservationInput!): Reservation
+    updateReservation(reservationId: ID!, input: UpdateReservationInput!): Reservation
+    deleteReservation(reservationId: ID!): Boolean
   }
 `;
 

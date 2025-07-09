@@ -31,7 +31,7 @@ async function createEvent(req, res, next) {
 
     const notification = {
       userId: newEvent.organizerId,
-      type: 'Evento Creado',
+      type: 'info',
       message: `Se creó el evento: ${newEvent.title}`,
       sentDate: new Date().toISOString(),
       read: false
@@ -68,8 +68,29 @@ async function updateEvent(req, res, next) {
 
 async function deleteEvent(req, res, next) {
   try {
-    const deleted = await eventService.remove(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Event not found' });
+    const event = await eventService.findById(req.params.id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    await eventService.remove(req.params.id);
+
+    // Crear y validar notificación
+    const notification = {
+      userId: event.organizerId,
+      type: 'Evento Eliminado',
+      message: `El evento "${event.title}" se eliminó.`,
+      sentDate: new Date().toISOString(),
+      read: false
+    };
+
+    const { error: notifError, value: validNotification } = validateNotification(notification);
+    if (notifError) {
+      console.error('Invalid notification DTO:', notifError.details.map(e => e.message));
+    } else {
+      const channel = getChannel();
+      channel.assertQueue('notification');
+      channel.sendToQueue('notification', Buffer.from(JSON.stringify(validNotification)));
+    }
+
     res.status(204).send();
   } catch (err) {
     next(err);

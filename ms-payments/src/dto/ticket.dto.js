@@ -6,7 +6,7 @@ const ticketSchema = Joi.object({
   zoneId: Joi.number().integer().required(),
   clientId: Joi.number().integer().required(),
   purchaseDate: Joi.date().iso().required(),
-  paymentMethod: Joi.string().valid('card', 'cash', 'transfer').required()
+  paymentMethod: Joi.string().valid('card', 'cash', 'transfer', 'none').required()
 });
 
 function validateTicket(data) {

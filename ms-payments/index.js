@@ -4,6 +4,7 @@ const cors = require('cors');
 const sequelize = require('./src/config/db');
 const reservationRoutes = require('./src/routes/reservation.routes');
 const ticketRoutes = require('./src/routes/ticket.routes');
+const { connectRabbitMQ } = require('./src/config/rabbitmq');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -26,10 +27,14 @@ app.use((err, req, res, next) => {
 sequelize.sync()
   .then(() => {
     console.log('Database connected and models synchronized');
+    return connectRabbitMQ();
+  })
+  .then(() => {
+    console.log('Connected to RabbitMQ');
     app.listen(PORT, () => {
       console.log(`Server listening on port ${PORT}`);
     });
   })
   .catch((err) => {
-    console.error('Failed to connect to database:', err);
+    console.error('Startup failed:', err);
   });
