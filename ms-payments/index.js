@@ -16,7 +16,7 @@ app.use('/api/reservation', reservationRoutes);
 app.use('/api/ticket', ticketRoutes);
 
 app.get('/', (req, res) => {
-  res.send('Payment microservice is running');
+  res.status(200).send('Payment microservice is running');
 });
 
 app.use((err, req, res, next) => {

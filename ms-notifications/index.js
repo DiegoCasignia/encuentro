@@ -12,14 +12,13 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send('Notification microservice is running');
+  res.status(200).send('Notification microservice is running');
 });
 
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: 'Internal Server Error' });
 });
-
 
 sequelize.sync()
   .then(async () => {
