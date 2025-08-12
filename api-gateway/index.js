@@ -1,66 +1,45 @@
 require('dotenv').config();
 const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
+const httpProxy = require('http-proxy');
 const services = require('./src/config/services');
-const authenticate = require('./src/middlewares/auth');
-const authRoutes = require('./src/routes/authRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+const proxy = httpProxy.createProxyServer({});
 
 app.disable('x-powered-by');
 app.use(require('cors')());
 app.use(require('morgan')('dev'));
-app.use(express.json({ limit: '10kb' }));
 
-app.use('/api/auth', authRoutes);
-
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api/auth')) return next();
-  authenticate(req, res, next);
+// Manejar errores del proxy
+proxy.on('error', (err, req, res) => {
+  console.error('Proxy error:', err);
+  if (!res.headersSent) {
+    res.status(503).json({ error: 'Service unavailable' });
+  }
 });
 
-Object.entries(services).forEach(([serviceName, config]) => {
-  const routePath = `/api/${serviceName.replace('Service', '').toLowerCase()}`;
+// Proxy para auth service (rutas públicas)
+app.use('/api/auth', (req, res) => {
+  const target = process.env.AUTH_SERVICE_URL || 'http://localhost:3004';
   
-  app.use(routePath, createProxyMiddleware({
-    target: config.baseUrl,
+  console.log(`Proxying ${req.method} ${req.url} to ${target}`);
+  
+  // Reescribir el path
+  req.url = req.url.replace('/api/auth', '');
+  
+  proxy.web(req, res, {
+    target: target,
     changeOrigin: true,
-    pathRewrite: { [`^${routePath}`]: '' },
-    onProxyReq: (proxyReq, req) => {
-      if (req.user) {
-        proxyReq.setHeader('x-user-id', req.user.userId);
-        proxyReq.setHeader('x-user-email', req.user.email);
-        proxyReq.setHeader('x-user-role', req.user.role);
-      }
-    },
-    onError: (err, req, res) => {
-      console.error(`[${serviceName}] Proxy Error:`, err);
-      res.status(503).json({ 
-        error: `Service ${serviceName} unavailable`,
-        details: err.message
-      });
-    }
-  }));
+    selfHandleResponse: false
+  });
 });
 
-app.get('/', (req, res) => {
-  res.json({
-    message: 'API Gateway',
-    status: 'running',
-    authenticated: !!req.user,
-    services: Object.keys(services).map(name => ({
-      name: name.replace('Service', ''),
-      path: `/api/${name.replace('Service', '').toLowerCase()}`
-    }))
-  });
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'running', timestamp: new Date().toISOString() });
 });
 
 app.listen(PORT, () => {
-  console.log(`Gateway running on port ${PORT}`);
-  console.log('Services:');
-  Object.entries(services).forEach(([name, config]) => {
-    console.log(`- ${name.padEnd(18)}: ${config.baseUrl}`);
-  });
-  console.log('Authentication: Required for all routes except /api/auth');
+  console.log(`API Gateway running on port ${PORT}`);
 });

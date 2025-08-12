@@ -1,21 +1,50 @@
 const bcrypt = require('bcryptjs');
-const { generateToken, generateRefreshToken } = require('../utils/jwt');
-const { User } = require('../models/user.model');
+const jwt = require('jsonwebtoken');
+const User = require('../models/user.model');
+
+const generateToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, { 
+    expiresIn: process.env.JWT_EXPIRES_IN || '1h' 
+  });
+};
+
+const generateRefreshToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, { 
+    expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7d'
+  });
+};
+
+const verifyToken = (token) => {
+  return jwt.verify(token, process.env.JWT_SECRET);
+};
 
 const register = async (userData) => {
-  const hashedPassword = await bcrypt.hash(userData.password, 12);
-  const user = await User.create({
-    ...userData,
-    password: hashedPassword
-  });
-  
-  return {
-    userId: user.userId,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    role: user.role
-  };
+  try {
+    // Verificar si el usuario ya existe
+    const existingUser = await User.findOne({ where: { email: userData.email } });
+    if (existingUser) {
+      throw new Error('El email ya está registrado');
+    }
+
+    // Hash de la contraseña
+    const hashedPassword = await bcrypt.hash(userData.password, 12);
+    
+    // Crear usuario
+    const user = await User.create({
+      ...userData,
+      password: hashedPassword
+    });
+    
+    return {
+      userId: user.userId,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role
+    };
+  } catch (error) {
+    throw error;
+  }
 };
 
 const login = async (email, password) => {
@@ -51,8 +80,10 @@ const login = async (email, password) => {
 };
 
 const refreshAccessToken = async (refreshToken) => {
-  const { userId } = verifyToken(refreshToken);
-  const user = await User.findOne({ where: { userId, refreshToken } });
+  const decoded = verifyToken(refreshToken);
+  const user = await User.findOne({ 
+    where: { userId: decoded.userId, refreshToken } 
+  });
   
   if (!user) {
     throw new Error('Refresh token inválido');

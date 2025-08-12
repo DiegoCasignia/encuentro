@@ -15,6 +15,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE']
 }));
 app.use(morgan('dev'));
+app.use(express.json());
 
 testConnection()
   .then(() => console.log('DB connection verified'))

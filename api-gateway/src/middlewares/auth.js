@@ -9,8 +9,11 @@ const authenticate = async (req, res, next) => {
     }
 
     // Validar token con el auth-service
+    console.log('Validating with:', `${services.authService.baseUrl}/validate`); // ✅ Debug
+    
     const { data } = await axios.get(`${services.authService.baseUrl}/validate`, {
-      headers: { Authorization: authHeader }
+      headers: { Authorization: authHeader },
+      timeout: 5000 // Agregar timeout
     });
 
     // Adjuntar usuario al request

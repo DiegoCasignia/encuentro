@@ -1,4 +1,4 @@
-const authService = require('../services/auth.service');
+const { validateToken } = require('../services/auth.service');
 
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -10,7 +10,7 @@ const verifyToken = (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    const payload = authService.validateToken(token);
+    const payload = validateToken(token);
     req.user = payload;
     next();
   } catch (err) {
